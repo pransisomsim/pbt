@@ -1,6 +1,10 @@
 const express = require('express');
 const app = express();
+
 const userRoutes = require('./src/routes/userRoutes');
+const accountRoutes = require('./src/routes/accountRoutes')
+const transactionRoutes = require('./src/routes/transactionRoutes');
+const categoryRoutes = require('./src/routes/categoryRoutes')
 
 app.use(express.json());
 const cors = require('cors');
@@ -11,6 +15,9 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api/user', userRoutes);
+app.use('/api/account', accountRoutes);
+app.use('/api/transaction', transactionRoutes);
+app.use('/api/categories', categoryRoutes);
 
 
 app.use((err, req, res, next) => {
