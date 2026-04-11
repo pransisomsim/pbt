@@ -1,22 +1,29 @@
-import { useState } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
+import Dashboard from './components/Dashboard';
+// import Accounts from './components/Accounts/Accounts';
+// import Transactions from './components/Transactions/Transactions';
+import PrivateRoute from './components/PrivateRoutes';
 
-// Simple page switcher — replace this with React Router later
 function App() {
-    const [page, setPage] = useState('login'); // 'login' | 'register' | 'dashboard'
+  return (
+    <Routes>
+      {/* Public */}
+      <Route path="/login"    element={<Login />} />
+      <Route path="/register" element={<Register />} />
 
-    if (page === 'register') return <Register onNavigate={setPage} />;
-    if (page === 'login')    return <Login    onNavigate={setPage} />;
+      {/* Protected */}
+      <Route element={<PrivateRoute />}>
+        <Route path="/dashboard"    element={<Dashboard />} />
+        {/* <Route path="/accounts"     element={<Accounts />} /> */}
+        {/* <Route path="/transactions" element={<Transactions />} /> */}
+      </Route>
 
-    // placeholder until you build the dashboard
-    return (
-        <div style={{ padding: '2rem', textAlign: 'center' }}>
-            <h2>Dashboard coming soon</h2>
-            <button onClick={() => setPage('login')}>Log out</button>
-        </div>
-    );
+      {/* Fallback */}
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+    </Routes>
+  );
 }
 
 export default App;
-
