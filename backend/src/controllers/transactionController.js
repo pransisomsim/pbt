@@ -1,16 +1,18 @@
+// backend/src/controllers/transactionController.js
 const Transaction = require('../models/transaction');
 
 class TransactionController {
     static async getAll(req, res) {
         try {
+            console.log('TransactionController.getAll - userId:', req.userId);
             const { limit } = req.query;
             const transactions = await Transaction.findAllByUser(
-                req.userId, 
+                req.userId,
                 limit ? parseInt(limit) : null
             );
             res.json({ transactions });
         } catch (err) {
-            console.error(err);
+            console.error('TransactionController.getAll error:', err);
             res.status(500).json({ error: 'Failed to fetch transactions' });
         }
     }
@@ -20,10 +22,10 @@ class TransactionController {
             const now = new Date();
             const year = req.query.year || now.getFullYear();
             const month = req.query.month || now.getMonth() + 1;
-            
+
             const summary = await Transaction.findMonthlySummary(req.userId, year, month);
             const categories = await Transaction.getCategoryBreakdown(req.userId, year, month);
-            
+
             res.json({
                 summary: {
                     income: parseFloat(summary.total_income || 0),
@@ -36,7 +38,7 @@ class TransactionController {
                 }))
             });
         } catch (err) {
-            console.error(err);
+            console.error('TransactionController.getMonthlySummary error:', err);
             res.status(500).json({ error: 'Failed to fetch monthly summary' });
         }
     }
@@ -44,26 +46,26 @@ class TransactionController {
     static async create(req, res) {
         try {
             const { account_id, category_id, amount, type, transaction_date, note } = req.body;
-            
+
             if (!account_id || !category_id || !amount || !type || !transaction_date) {
                 return res.status(400).json({ error: 'Missing required fields' });
             }
-            
+
             const transaction = await Transaction.create(req.userId, {
                 account_id,
                 category_id,
                 amount,
                 type,
                 transaction_date,
-                note
+                note: note || null
             });
-            
-            res.status(201).json({ 
-                message: 'Transaction created', 
-                transactionId: transaction.id 
+
+            res.status(201).json({
+                message: 'Transaction created',
+                transactionId: transaction.id
             });
         } catch (err) {
-            console.error(err);
+            console.error('TransactionController.create error:', err);
             res.status(500).json({ error: 'Failed to create transaction' });
         }
     }
@@ -71,20 +73,20 @@ class TransactionController {
     static async update(req, res) {
         try {
             const { category_id, note, transaction_date } = req.body;
-            
+
             const updated = await Transaction.update(req.params.id, req.userId, {
                 category_id,
-                note,
+                note: note || null,
                 transaction_date
             });
-            
+
             if (!updated) {
                 return res.status(404).json({ error: 'Transaction not found' });
             }
-            
+
             res.json({ message: 'Transaction updated' });
         } catch (err) {
-            console.error(err);
+            console.error('TransactionController.update error:', err);
             res.status(500).json({ error: 'Failed to update transaction' });
         }
     }
@@ -92,14 +94,14 @@ class TransactionController {
     static async delete(req, res) {
         try {
             const deleted = await Transaction.delete(req.params.id, req.userId);
-            
+
             if (!deleted) {
                 return res.status(404).json({ error: 'Transaction not found' });
             }
-            
+
             res.json({ message: 'Transaction deleted' });
         } catch (err) {
-            console.error(err);
+            console.error('TransactionController.delete error:', err);
             res.status(500).json({ error: 'Failed to delete transaction' });
         }
     }

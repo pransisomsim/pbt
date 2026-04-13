@@ -19,8 +19,13 @@ function Login({ onNavigate }) {
         setLoading(true);
         setError('');
         try {
-            await AuthService.login(formData);
-            alert('Login successful!');
+            const result = await AuthService.login(formData);
+
+            if (result?.error) {
+              setError(result.message);
+              return;
+            }
+
             navigate('/Dashboard')
         } catch (err) {
             setError(err.message);

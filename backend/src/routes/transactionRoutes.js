@@ -1,12 +1,15 @@
+// backend/src/routes/transactionRoutes.js
 const express = require('express');
 const router = express.Router();
 const TransactionController = require('../controllers/transactionController');
-const authenticate = require('../middleware/auth');
+const authMiddleware = require('../middleware/auth');
 
-router.use(authenticate);
+// Apply auth middleware to all routes
+router.use(authMiddleware);
 
+// IMPORTANT: Order matters! Specific routes first
+router.get('/summary', TransactionController.getMonthlySummary);
 router.get('/', TransactionController.getAll);
-router.get('/monthly-summary', TransactionController.getMonthlySummary);
 router.post('/', TransactionController.create);
 router.put('/:id', TransactionController.update);
 router.delete('/:id', TransactionController.delete);

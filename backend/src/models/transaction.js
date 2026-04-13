@@ -1,25 +1,30 @@
+// backend/src/models/transaction.js
 const db = require('../config/database');
 const Account = require('./account');
 
 class Transaction {
     static async create(userId, data) {
         const { account_id, category_id, amount, type, transaction_date, note } = data;
-        
+
         const connection = await db.getConnection();
         await connection.beginTransaction();
-        
+
         try {
-            const signedAmount = type === 'income' ? Math.abs(amount) : -Math.abs(amount);
+            // Store absolute (positive) amount to satisfy CHECK (amount > 0)
+            const positiveAmount = Math.abs(amount);
             
+            // Calculate signed amount for balance update
+            const signedAmount = type === 'income' ? positiveAmount : -positiveAmount;
+
             const [result] = await connection.execute(
-                `INSERT INTO transactions 
-                (user_id, account_id, category_id, amount, type, transaction_date, note) 
+                `INSERT INTO transactions
+                (user_id, account_id, category_id, amount, type, transaction_date, note)
                 VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                [userId, account_id, category_id, signedAmount, type, transaction_date, note]
+                [userId, account_id, category_id, positiveAmount, type, transaction_date, note || null]
             );
-            
+
             await Account.updateBalance(account_id, signedAmount, connection);
-            
+
             await connection.commit();
             return { id: result.insertId };
         } catch (err) {
@@ -50,13 +55,13 @@ class Transaction {
             WHERE t.user_id = ?
             ORDER BY t.transaction_date DESC, t.created_at DESC
         `;
-        
+
         if (limit) {
             query += ` LIMIT ?`;
             const [rows] = await db.execute(query, [userId, limit]);
             return rows;
         }
-        
+
         const [rows] = await db.execute(query, [userId]);
         return rows;
     }
@@ -65,7 +70,7 @@ class Transaction {
         const [rows] = await db.execute(
             `SELECT 
                 SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as total_income,
-                SUM(CASE WHEN type = 'expense' THEN ABS(amount) ELSE 0 END) as total_expense
+                SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as total_expense
              FROM transactions 
              WHERE user_id = ? 
              AND YEAR(transaction_date) = ? 
@@ -79,7 +84,7 @@ class Transaction {
         const [rows] = await db.execute(
             `SELECT 
                 c.name as category_name,
-                SUM(ABS(t.amount)) as total
+                SUM(t.amount) as total
              FROM transactions t
              JOIN categories c ON t.category_id = c.id
              WHERE t.user_id = ? 
@@ -98,24 +103,22 @@ class Transaction {
         const { category_id, note, transaction_date } = data;
         const connection = await db.getConnection();
         await connection.beginTransaction();
-        
+
         try {
-            // Get old transaction to reverse balance change
             const [oldTx] = await connection.execute(
-                'SELECT account_id, amount FROM transactions WHERE id = ? AND user_id = ?',
+                'SELECT account_id, amount, type FROM transactions WHERE id = ? AND user_id = ?',
                 [id, userId]
             );
-            
+
             if (!oldTx[0]) return false;
-            
-            // Update transaction
+
             const [result] = await connection.execute(
                 `UPDATE transactions 
                  SET category_id = ?, note = ?, transaction_date = ?
                  WHERE id = ? AND user_id = ?`,
-                [category_id, note, transaction_date, id, userId]
+                [category_id, note || null, transaction_date, id, userId]
             );
-            
+
             await connection.commit();
             return result.affectedRows > 0;
         } catch (err) {
@@ -129,25 +132,24 @@ class Transaction {
     static async delete(id, userId) {
         const connection = await db.getConnection();
         await connection.beginTransaction();
-        
+
         try {
-            // Get transaction details before deletion
             const [tx] = await connection.execute(
-                'SELECT account_id, amount FROM transactions WHERE id = ? AND user_id = ?',
+                'SELECT account_id, amount, type FROM transactions WHERE id = ? AND user_id = ?',
                 [id, userId]
             );
-            
+
             if (!tx[0]) return false;
-            
-            // Reverse the balance change
-            await Account.updateBalance(tx[0].account_id, -tx[0].amount, connection);
-            
-            // Delete transaction
+
+            // Reverse the balance change - convert stored positive amount back to signed
+            const signedAmount = tx[0].type === 'income' ? -tx[0].amount : tx[0].amount;
+            await Account.updateBalance(tx[0].account_id, signedAmount, connection);
+
             const [result] = await connection.execute(
                 'DELETE FROM transactions WHERE id = ? AND user_id = ?',
                 [id, userId]
             );
-            
+
             await connection.commit();
             return result.affectedRows > 0;
         } catch (err) {

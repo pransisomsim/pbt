@@ -1,24 +1,37 @@
+// backend/src/controllers/accountController.js
 const Account = require('../models/account');
 
 class AccountController {
     static async getAll(req, res) {
         try {
+            console.log('AccountController.getAll - userId:', req.userId);
             const accounts = await Account.findAllByUser(req.userId);
+            console.log('Accounts found:', accounts.length);
             res.json({ accounts });
         } catch (err) {
-            res.status(500).json({ error: 'Failed to fetch accounts' });
+            console.error('AccountController.getAll error:', err);
+            res.status(500).json({ 
+                error: 'Failed to fetch accounts',
+                details: err.message 
+            });
         }
     }
 
     static async create(req, res) {
         try {
             const { name, balance } = req.body;
+            console.log('AccountController.create - userId:', req.userId, 'name:', name);
+            
             if (!name) return res.status(400).json({ error: 'Account name is required' });
 
             const account = await Account.create(req.userId, name, balance || 0);
             res.status(201).json({ message: 'Account created', accountId: account.id });
         } catch (err) {
-            res.status(500).json({ error: 'Failed to create account' });
+            console.error('AccountController.create error:', err);
+            res.status(500).json({ 
+                error: 'Failed to create account',
+                details: err.message 
+            });
         }
     }
 
@@ -32,6 +45,7 @@ class AccountController {
 
             res.json({ message: 'Account updated' });
         } catch (err) {
+            console.error('AccountController.update error:', err);
             res.status(500).json({ error: 'Failed to update account' });
         }
     }
@@ -43,20 +57,23 @@ class AccountController {
 
             res.json({ message: 'Account deleted' });
         } catch (err) {
+            console.error('AccountController.delete error:', err);
             res.status(500).json({ error: 'Failed to delete account' });
         }
     }
+    
     static async getOne(req, res) {
-      try {
-          const account = await Account.findByIdAndUser(req.params.id, req.userId);
-          if (!account) {
-              return res.status(404).json({ error: 'Account not found' });
-          }
-          res.json({ account });
-      } catch (err) {
-          res.status(500).json({ error: 'Failed to fetch account' });
-      }
-  }
+        try {
+            const account = await Account.findByIdAndUser(req.params.id, req.userId);
+            if (!account) {
+                return res.status(404).json({ error: 'Account not found' });
+            }
+            res.json({ account });
+        } catch (err) {
+            console.error('AccountController.getOne error:', err);
+            res.status(500).json({ error: 'Failed to fetch account' });
+        }
+    }
 }
 
 module.exports = AccountController;

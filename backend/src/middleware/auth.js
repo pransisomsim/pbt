@@ -1,3 +1,4 @@
+// backend/src/middleware/auth.js
 const jwt = require("jsonwebtoken");
 
 module.exports = (req, res, next) => {
@@ -13,7 +14,10 @@ module.exports = (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    req.user = decoded; // attach user data
+    req.user = decoded; // attach full user data
+    
+    // Your token has { userId: user.id }, so extract it correctly
+    req.userId = decoded.userId; 
 
     next();
   } catch (err) {

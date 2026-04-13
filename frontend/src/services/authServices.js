@@ -9,6 +9,8 @@ class AuthService {
       body: credentials,
     });
 
+    if (data.error) return data;
+
     localStorage.setItem('token', data.token);
     return data;
   }

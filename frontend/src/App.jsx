@@ -2,8 +2,8 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from './components/Auth/Login';
 import Register from './components/Auth/Register';
 import Dashboard from './components/Dashboard';
-// import Accounts from './components/Accounts/Accounts';
-// import Transactions from './components/Transactions/Transactions';
+import Accounts from './components/Accounts';
+import Transactions from './components/Transactions';
 import PrivateRoute from './components/PrivateRoutes';
 
 function App() {
@@ -16,8 +16,8 @@ function App() {
       {/* Protected */}
       <Route element={<PrivateRoute />}>
         <Route path="/dashboard"    element={<Dashboard />} />
-        {/* <Route path="/accounts"     element={<Accounts />} /> */}
-        {/* <Route path="/transactions" element={<Transactions />} /> */}
+        <Route path="/accounts"     element={<Accounts />} />
+        <Route path="/transactions" element={<Transactions />} />
       </Route>
 
       {/* Fallback */}
