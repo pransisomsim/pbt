@@ -123,8 +123,8 @@ MIT License — feel free to use this project for your portfolio.
 ## 👤 Author
 
 - Name: Your Name  
-- GitHub: https://github.com/yourusername  
-- Portfolio: https://yourportfolio.com  
+- GitHub: https://github.com/pransisomsim 
+- Portfolio: https://pransisomsim.vercel.app
 
 ---
 
